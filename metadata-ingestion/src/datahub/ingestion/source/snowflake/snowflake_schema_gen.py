@@ -1518,10 +1518,10 @@ class SnowflakeSchemaGenerator(SnowflakeStructuredReportMixin):
 
     def parse_clustering_key(self, clustering_key: str) -> List[str]:
         """
-        Parse clustering key string and return list of Snowflake column nmes objects.
+        Parse clustering key string and return list of Snowflake column names.
 
         Examples:
-        - LINEAR(yyyymmdd) -> returns column with name 'yyyymmdd'
+        - LINEAR(yyyymmdd) -> returns column with name 'YYYYMMDD'
         - LINEAR(C1, C2) -> returns columns with names 'C1' and 'C2'
         - C1, C2 -> returns columns with names 'C1' and 'C2'
         """
@@ -1615,6 +1615,11 @@ class SnowflakeSchemaGenerator(SnowflakeStructuredReportMixin):
         if isinstance(table, SnowflakeTable) and table.clustering_key:
             clustering_columns = set(self.parse_clustering_key(table.clustering_key))
 
+            logger.debug(
+                f"Clustering columns found for {table.name}: "
+                f"{', '.join(clustering_columns)}"
+            )
+
         foreign_keys: Optional[List[ForeignKeyConstraint]] = None
         if isinstance(table, SnowflakeTable) and len(table.foreign_keys) > 0:
             foreign_keys = self.build_foreign_keys(table, dataset_urn)
@@ -1661,7 +1666,7 @@ class SnowflakeSchemaGenerator(SnowflakeStructuredReportMixin):
                             else None
                         )
                     ),
-                    isPartitioningKey=col.name in clustering_columns,
+                    isPartitioningKey=col.name.upper() in clustering_columns,
                     globalTags=(
                         # For semantic views, add DIMENSION/FACT/METRIC tags
                         self._build_semantic_view_tags(
