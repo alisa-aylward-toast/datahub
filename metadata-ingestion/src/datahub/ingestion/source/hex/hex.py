@@ -260,9 +260,15 @@ class HexSource(StatefulIngestionSourceBase):
     def get_workunits_internal(self) -> Iterable[MetadataWorkUnit]:
         with self.report.new_stage("Fetch Hex assets from Hex API"):
             for project_or_component in self.hex_api.fetch_projects():
-                if project_or_component.categories and any(
-                    not self.source_config.category_pattern.allowed(c.name)
-                    for c in project_or_component.categories
+                if project_or_component.categories and (
+                    any(
+                        self.source_config.category_pattern.denied(c.name)
+                        for c in project_or_component.categories
+                    )
+                    or not any(
+                        self.source_config.category_pattern.allowed(c.name)
+                        for c in project_or_component.categories
+                    )
                 ):
                     continue
 
